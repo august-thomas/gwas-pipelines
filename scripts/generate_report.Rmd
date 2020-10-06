@@ -5,6 +5,10 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+Sys.setenv("GCS_DEFAULT_BUCKET" = "fc-bb2e1cbd-3b7c-460b-bb9e-b0031b84d809",
+           "GCS_AUTH_FILE" = "C:/Users/Gus/Downloads/nih-nci-dceg-episphere-dev-da78cda78315.json")
+
 library(ggmap)
 library(ggplot2)
 library(dplyr)
@@ -15,6 +19,9 @@ library(plumber)
 library(jsonlite)
 library(RCurl)
 library(rjson)
+library(googleCloudStorageR)
+library(tfdatasets)
+library(cloudml)
 ```
 
 ## Association Study Summary Report
@@ -23,7 +30,21 @@ This is the Association Study Summary Report. For more details on the workflow s
 
 Describe the input data
 ```{r}
-ls()
+
+
+```
+
+
+new method to pull info from bucket:
+```{r echo=FALSE}
+
+gcs_global_bucket("fc-bb2e1cbd-3b7c-460b-bb9e-b0031b84d809")
+
+proj <- "nih-nci-dceg-episphere-dev"
+bucket <- "fc-bb2e1cbd-3b7c-460b-bb9e-b0031b84d809"
+bucket_info <- gcs_get_bucket(bucket)
+bucket_info
+
 ```
 
 
@@ -34,29 +55,31 @@ Manhattan  plots
 
 # Base URL path
 
-# Building RESTful APIs via Plumber:
-
-#* @apiTitle Simple API
-
-#* Echo provided text
-#* @param text The text to be echoed in the response
-#* @get /echo
-function(text = "") {
-  list(
-    message_echo = paste("The text is:", text)
-  )
-}
+bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan_png <- flow_images_from_directory(
+  gs_data_dir_local("gs://fc-bb2e1cbd-3b7c-460b-bb9e-b0031b84d809/b35607aa-e7f4-4b68-aaca-38f1a1d0f1ed/run_association_test/c63b31f1-bd91-4cf0-a16f-6022a4626d55/call-make_bolt_plots/shard-0/cacheCopy/bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan.png"),
+                    image_data_generator(rescale = 1/255),
+                    target_size = c(150, 150),
+                    batch_size = 32,
+                    class_mode = "binary"
+                                                                                             )
 
 base_url = "https://storage.cloud.google.com/fc-bb2e1cbd-3b7c-460b-bb9e-b0031b84d809/b35607aa-e7f4-4b68-aaca-38f1a1d0f1ed/run_association_test/c63b31f1-bd91-4cf0-a16f-6022a4626d55/call-make_bolt_plots/shard-0/cacheCopy/bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan.png?authuser=2"
 
 full_url = paste0(base_url, "gs://fc-bb2e1cbd-3b7c-460b-bb9e-b0031b84d809/b35607aa-e7f4-4b68-aaca-38f1a1d0f1ed/run_association_test/c63b31f1-bd91-4cf0-a16f-6022a4626d55/call-make_bolt_plots/shard-0/cacheCopy/bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan.png")
 
+# test with just the base_URL
+
 # encode the URL with characters for each space.
 full_url <- URLencode(full_url)
+base_url <- URLencode(base_url)
 
 # Convert JSON to an image?
-bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan_png <- getURL(full_url)
+
+bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan_png <- getURLContent(full_url)
 bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan_png
+
+bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan_png_base <- getURLContent(base_url)
+bolt_complete_set_bq_bmi_curr_co_results_merged_P_manhattan_png_base
 ## [1] "list"
 
 
